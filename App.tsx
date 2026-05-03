@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, CheckSquare, Users, FileText, Settings, 
   Menu, X, Bell, Search, LogOut, Briefcase, DollarSign, 
-  CalendarDays, BarChart2, CheckCircle, Database, Book, Sparkles
+  CalendarDays, BarChart2, CheckCircle, Database, Book, Sparkles,
+  Moon, Sun
 } from 'lucide-react';
 
 import Dashboard from './components/Dashboard';
@@ -24,6 +25,23 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>(ViewType.DASHBOARD);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('darkMode') === 'true' || 
+        (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('darkMode', 'true');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('darkMode', 'false');
+    }
+  }, [isDarkMode]);
 
   if (!isAuthenticated) {
     return <Auth onLogin={() => setIsAuthenticated(true)} />;
@@ -38,14 +56,14 @@ const App: React.FC = () => {
       }}
       className={`w-full flex items-center px-4 py-3 rounded-xl mb-1 transition-all ${
         currentView === view 
-          ? 'bg-primary-50 text-primary-700 font-medium' 
-          : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+          ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 font-medium' 
+          : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
       }`}
     >
-      <Icon className={`w-5 h-5 mr-3 ${currentView === view ? 'text-primary-600' : 'text-slate-400'}`} />
+      <Icon className={`w-5 h-5 mr-3 ${currentView === view ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 dark:text-slate-500'}`} />
       <span>{label}</span>
       {badge && (
-        <span className="ml-auto bg-primary-100 text-primary-700 text-xs font-bold px-2 py-0.5 rounded-full">
+        <span className="ml-auto bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-400 text-xs font-bold px-2 py-0.5 rounded-full">
             {badge}
         </span>
       )}
@@ -53,13 +71,13 @@ const App: React.FC = () => {
   );
 
   const GroupTitle = ({ title }: { title: string }) => (
-    <div className="px-4 mt-6 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+    <div className="px-4 mt-6 mb-2 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
       {title}
     </div>
   );
 
   return (
-    <div className="flex h-screen bg-slate-50 font-sans text-slate-900">
+    <div className="flex h-screen bg-slate-50 dark:bg-dark-bg font-sans text-slate-900 dark:text-slate-100 transition-colors">
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
@@ -70,16 +88,16 @@ const App: React.FC = () => {
 
       {/* Sidebar */}
       <aside className={`
-        fixed lg:static inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out
+        fixed lg:static inset-y-0 left-0 z-50 w-72 bg-white dark:bg-dark-card border-r border-slate-200 dark:border-dark-border transform transition-transform duration-200 ease-in-out
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <div className="h-full flex flex-col">
           {/* Logo */}
-          <div className="h-16 flex items-center px-6 border-b border-slate-100">
+          <div className="h-16 flex items-center px-6 border-b border-slate-100 dark:border-dark-border">
             <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center mr-3 shadow-sm">
                 <span className="text-white font-bold text-lg">N</span>
             </div>
-            <span className="text-xl font-bold text-slate-900 tracking-tight">NEXUS</span>
+            <span className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">NEXUS</span>
           </div>
 
           {/* Navigation */}
@@ -109,10 +127,10 @@ const App: React.FC = () => {
                     className={`w-full flex items-center px-4 py-3 rounded-xl mb-1 transition-all relative overflow-hidden group ${
                         currentView === ViewType.ASSISTANT
                         ? 'bg-gradient-to-r from-primary-600 to-purple-600 text-white shadow-md'
-                        : 'bg-gradient-to-r from-primary-50 to-purple-50 text-slate-700 hover:shadow-sm'
+                        : 'bg-gradient-to-r from-primary-50 to-purple-50 dark:from-slate-800 dark:to-slate-800 text-slate-700 dark:text-slate-300 hover:shadow-sm'
                     }`}
                     >
-                    <Sparkles className={`w-5 h-5 mr-3 ${currentView === ViewType.ASSISTANT ? 'text-white' : 'text-purple-600'}`} />
+                    <Sparkles className={`w-5 h-5 mr-3 ${currentView === ViewType.ASSISTANT ? 'text-white' : 'text-purple-600 dark:text-purple-400'}`} />
                     <span className="font-medium">AI Assistant</span>
                     {currentView !== ViewType.ASSISTANT && (
                         <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -122,17 +140,17 @@ const App: React.FC = () => {
           </div>
 
           {/* User Profile Footer */}
-          <div className="p-4 border-t border-slate-100">
+          <div className="p-4 border-t border-slate-100 dark:border-dark-border">
             <div className="flex items-center gap-3 mb-4">
-                <img src={CURRENT_USER.avatar} alt="User" className="w-10 h-10 rounded-full border border-slate-200" />
+                <img src={CURRENT_USER.avatar} alt="User" className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700" />
                 <div className="flex-1 overflow-hidden">
-                    <p className="text-sm font-bold text-slate-900 truncate">{CURRENT_USER.name}</p>
-                    <p className="text-xs text-slate-500 truncate">{CURRENT_USER.role}</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{CURRENT_USER.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{CURRENT_USER.role}</p>
                 </div>
             </div>
             <button 
                 onClick={() => setIsAuthenticated(false)}
-                className="w-full flex items-center justify-center px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-sm transition-colors"
+                className="w-full flex items-center justify-center px-4 py-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-sm transition-colors"
             >
                 <LogOut className="w-4 h-4 mr-2" /> Sign Out
             </button>
@@ -143,34 +161,41 @@ const App: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8">
+        <header className="h-16 bg-white dark:bg-dark-card border-b border-slate-200 dark:border-dark-border flex items-center justify-between px-4 lg:px-8 transition-colors">
             <div className="flex items-center">
                 <button 
                     onClick={() => setIsSidebarOpen(true)}
-                    className="p-2 -ml-2 mr-2 lg:hidden text-slate-500 hover:bg-slate-50 rounded-lg"
+                    className="p-2 -ml-2 mr-2 lg:hidden text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800 rounded-lg"
                 >
                     <Menu className="w-6 h-6" />
                 </button>
-                <h1 className="text-xl font-bold text-slate-800 capitalize">
+                <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100 capitalize">
                     {currentView.toLowerCase().replace('_', ' ')}
                 </h1>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
                 <div className="hidden md:flex relative">
                     <input 
                         type="text" 
                         placeholder="Search..." 
                         value={globalSearch}
                         onChange={(e) => setGlobalSearch(e.target.value)}
-                        className="w-64 pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500"
+                        className="w-64 pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500 dark:text-slate-100 dark:placeholder-slate-500"
                     />
                     <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 </div>
                 
-                <button className="relative p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-600 rounded-full transition-colors">
+                <button 
+                  onClick={() => setIsDarkMode(!isDarkMode)}
+                  className="p-2 text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 rounded-full transition-colors"
+                >
+                    {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                </button>
+                
+                <button className="relative p-2 text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 rounded-full transition-colors">
                     <Bell className="w-5 h-5" />
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-dark-card"></span>
                 </button>
             </div>
         </header>
