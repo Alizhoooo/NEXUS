@@ -1,14 +1,27 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { EMPLOYEES } from '../constants';
 import { Mail, MapPin, MoreVertical, Search, Filter } from 'lucide-react';
 
 const Employees: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Memoized filtered employees
+  const filteredEmployees = useMemo(() => {
+    if (!searchQuery.trim()) return EMPLOYEES;
+    return EMPLOYEES.filter(emp => 
+      emp.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      emp.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      emp.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      emp.department.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [searchQuery]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Employees</h2>
-          <p className="text-slate-500 text-sm">Total {EMPLOYEES.length} active team members</p>
+          <p className="text-slate-500 text-sm">Total {filteredEmployees.length} active team members</p>
         </div>
         
         <div className="flex gap-3 w-full sm:w-auto">
@@ -17,6 +30,8 @@ const Employees: React.FC = () => {
                 <input 
                     type="text" 
                     placeholder="Search employees..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm w-full sm:w-64 focus:ring-2 focus:ring-primary-500 outline-none"
                 />
             </div>
@@ -27,7 +42,7 @@ const Employees: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {EMPLOYEES.map((employee) => (
+        {filteredEmployees.map((employee) => (
           <div key={employee.id} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col items-center text-center relative hover:shadow-md transition-shadow group">
             <button className="absolute top-4 right-4 text-slate-300 hover:text-slate-600">
                 <MoreVertical className="w-5 h-5" />
