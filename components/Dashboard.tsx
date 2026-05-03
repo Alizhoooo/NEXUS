@@ -3,15 +3,18 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell 
 } from 'recharts';
-import { CheckCircle2, Clock, AlertTriangle, TrendingUp, Users, FileText } from 'lucide-react';
+import { CheckCircle2, Clock, AlertTriangle, TrendingUp, Users, FileText, Bell, Plus } from 'lucide-react';
 import { TASKS, EMPLOYEES, APPROVALS } from '../constants';
 import { TaskStatus } from '../types';
+import { AuthUser } from '../api/auth';
+import { EmptyState } from '../hooks/useLoadingState';
 
 interface DashboardProps {
   searchQuery?: string;
+  user?: AuthUser;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ searchQuery = '' }) => {
+const Dashboard: React.FC<DashboardProps> = ({ searchQuery = '', user }) => {
   // Stats
   const totalTasks = TASKS.length;
   const completedTasks = TASKS.filter(t => t.status === TaskStatus.DONE).length;
@@ -41,8 +44,39 @@ const Dashboard: React.FC<DashboardProps> = ({ searchQuery = '' }) => {
     { name: 'HR', workload: 60 },
   ];
 
+  const handleQuickAction = (action: string) => {
+    alert(`AI Action: ${action}\n\nThis would trigger an automated workflow in production.`);
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      {/* AI Suggestions Banner */}
+      <div className="bg-gradient-to-r from-purple-50 to-primary-50 border border-purple-200 rounded-xl p-4 flex items-start gap-4">
+        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+          <span className="text-lg">✨</span>
+        </div>
+        <div className="flex-1">
+          <h3 className="text-sm font-semibold text-purple-900">AI Insights</h3>
+          <p className="text-sm text-purple-700 mt-1">
+            Замечен спад активности в отделе Design. Создать встречу для обсуждения?
+          </p>
+          <div className="flex gap-2 mt-3">
+            <button 
+              onClick={() => handleQuickAction('Создать встречу с Design отделом')}
+              className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded-lg transition-colors"
+            >
+              Создать встречу
+            </button>
+            <button 
+              onClick={() => handleQuickAction('Показать детали аналитики')}
+              className="px-3 py-1.5 bg-white hover:bg-purple-50 text-purple-700 text-xs rounded-lg border border-purple-200 transition-colors"
+            >
+              Показать детали
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
@@ -98,7 +132,16 @@ const Dashboard: React.FC<DashboardProps> = ({ searchQuery = '' }) => {
               <AlertTriangle className="h-5 w-5 text-orange-600" />
             </div>
           </div>
-          <p className="text-xs text-orange-600 mt-2">Action required</p>
+          {pendingApprovals > 0 ? (
+            <button 
+              onClick={() => handleQuickAction('Напомнить всем о просроченных задачах')}
+              className="text-xs text-orange-600 mt-2 flex items-center hover:underline"
+            >
+              <Bell className="w-3 h-3 mr-1" /> Напомнить всем
+            </button>
+          ) : (
+            <p className="text-xs text-green-600 mt-2">Все утверждено</p>
+          )}
         </div>
       </div>
 
@@ -162,8 +205,9 @@ const Dashboard: React.FC<DashboardProps> = ({ searchQuery = '' }) => {
             Recent Activity
             {searchQuery && <span className="text-xs font-normal text-slate-400">Filtering by "{searchQuery}"</span>}
         </h3>
-        <div className="space-y-4">
-            {filteredTasks.length > 0 ? filteredTasks.slice(0, 5).map((task) => (
+        {filteredTasks.length > 0 ? (
+          <div className="space-y-4">
+            {filteredTasks.slice(0, 5).map((task) => (
                 <div key={task.id} className="flex items-start pb-4 border-b border-slate-100 last:border-0 last:pb-0">
                     <img src={task.assignee.avatar} alt={task.assignee.name} className="w-8 h-8 rounded-full mr-3" />
                     <div className="flex-1">
@@ -176,12 +220,19 @@ const Dashboard: React.FC<DashboardProps> = ({ searchQuery = '' }) => {
                         <Clock className="w-3 h-3 mr-1" /> 2h ago
                     </span>
                 </div>
-            )) : (
-                <div className="text-center py-8 text-slate-400 text-sm">
-                    No matching activity found for "{searchQuery}"
-                </div>
-            )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon={<FileText className="w-6 h-6" />}
+            title="Нет активности"
+            description={searchQuery 
+              ? `Не найдено задач по запросу "${searchQuery}"`
+              : "В системе пока нет задач. Создайте первую задачу!"}
+            actionLabel={!searchQuery ? "Создать задачу" : undefined}
+            onAction={!searchQuery ? () => handleQuickAction('Создать новую задачу') : undefined}
+          />
+        )}
       </div>
     </div>
   );
