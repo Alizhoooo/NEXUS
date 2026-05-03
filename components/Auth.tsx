@@ -1,23 +1,47 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Loader2 } from 'lucide-react';
+import { ShieldCheck, Loader2, AlertCircle } from 'lucide-react';
 
 interface AuthProps {
-  onLogin: () => void;
+  onLoginSuccess: () => void;
 }
 
-const Auth: React.FC<AuthProps> = ({ onLogin }) => {
+const Auth: React.FC<AuthProps> = ({ onLoginSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const [error, setError] = useState<string | null>(null);
+  const [showDemoCredentials, setShowDemoCredentials] = useState(false);
+  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    
+    try {
+      const { authenticateUser } = await import('../api/auth');
+      const user = await authenticateUser(email, password);
+      
+      if (user) {
+        localStorage.setItem('nexus_user', JSON.stringify(user));
+        onLoginSuccess();
+      } else {
+        setError('Неверный email или пароль');
+      }
+    } catch (err) {
+      setError('Ошибка подключения. Попробуйте позже.');
+    } finally {
       setLoading(false);
-      onLogin();
-    }, 1000);
+    }
+  };
+
+  const fillDemoCredentials = (role: 'admin' | 'manager' | 'employee') => {
+    const credentials = {
+      admin: { email: 'admin@kolesa.kz', password: 'admin123' },
+      manager: { email: 'manager@kolesa.kz', password: 'manager123' },
+      employee: { email: 'employee@kolesa.kz', password: 'employee123' }
+    };
+    setEmail(credentials[role].email);
+    setPassword(credentials[role].password);
   };
 
   return (
@@ -77,6 +101,13 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
               </div>
             </div>
 
+            {error && (
+              <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 p-3 rounded-lg">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                {error}
+              </div>
+            )}
+
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <input
@@ -121,11 +152,51 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                 <div className="w-full border-t border-slate-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-slate-500">Demo Access</span>
+                <button 
+                  onClick={() => setShowDemoCredentials(!showDemoCredentials)}
+                  className="bg-white px-2 text-slate-500 hover:text-primary-600 transition-colors"
+                >
+                  Demo Access
+                </button>
               </div>
             </div>
+            
+            {showDemoCredentials && (
+              <div className="mt-4 space-y-2">
+                <p className="text-xs text-slate-500 text-center mb-2">Quick login with demo accounts:</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => fillDemoCredentials('admin')}
+                    className="px-3 py-2 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg text-xs font-medium text-purple-700 transition-colors"
+                  >
+                    👑 Admin
+                  </button>
+                  <button
+                    onClick={() => fillDemoCredentials('manager')}
+                    className="px-3 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg text-xs font-medium text-blue-700 transition-colors"
+                  >
+                    📋 Manager
+                  </button>
+                  <button
+                    onClick={() => fillDemoCredentials('employee')}
+                    className="px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 transition-colors"
+                  >
+                    👤 Employee
+                  </button>
+                </div>
+                <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-xs text-amber-800">
+                    <strong>Demo Credentials:</strong><br/>
+                    Admin: admin@kolesa.kz / admin123<br/>
+                    Manager: manager@kolesa.kz / manager123<br/>
+                    Employee: employee@kolesa.kz / employee123
+                  </p>
+                </div>
+              </div>
+            )}
+            
             <div className="mt-6 text-center text-xs text-slate-400">
-              Any email/password works for demo purposes.
+              Different roles have different permissions. Try all three!
             </div>
           </div>
         </div>

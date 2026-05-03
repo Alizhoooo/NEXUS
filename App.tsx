@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, CheckSquare, Users, FileText, Settings, 
   Menu, X, Bell, Search, LogOut, Briefcase, DollarSign, 
@@ -17,40 +17,98 @@ import Wiki from './components/Wiki';
 import Assistant from './components/Assistant';
 import Auth from './components/Auth';
 import { ViewType } from './types';
-import { CURRENT_USER } from './constants';
+import { AuthUser } from './api/auth';
+import { canViewPayroll, canManageEmployees, canApproveRequests } from './api/auth';
 
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [currentView, setCurrentView] = useState<ViewType>(ViewType.DASHBOARD);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
 
-  if (!isAuthenticated) {
-    return <Auth onLogin={() => setIsAuthenticated(true)} />;
+  useEffect(() => {
+    const storedUser = localStorage.getItem('nexus_user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        localStorage.removeItem('nexus_user');
+      }
+    }
+    setIsLoading(false);
+  }, []);
+
+  const handleLoginSuccess = () => {
+    const storedUser = localStorage.getItem('nexus_user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('nexus_user');
+    setUser(null);
+    setCurrentView(ViewType.DASHBOARD);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-primary-600 rounded-xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <span className="text-white text-3xl font-bold">N</span>
+          </div>
+          <p className="text-slate-500">Loading NEXUS...</p>
+        </div>
+      </div>
+    );
   }
 
-  const NavItem = ({ view, icon: Icon, label, badge }: { view: ViewType, icon: any, label: string, badge?: number }) => (
-    <button
-      onClick={() => {
-        setCurrentView(view);
-        setIsSidebarOpen(false); // Close mobile sidebar on click
-        setGlobalSearch(''); // Reset search on view change
-      }}
-      className={`w-full flex items-center px-4 py-3 rounded-xl mb-1 transition-all ${
-        currentView === view 
-          ? 'bg-primary-50 text-primary-700 font-medium' 
-          : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
-      }`}
-    >
-      <Icon className={`w-5 h-5 mr-3 ${currentView === view ? 'text-primary-600' : 'text-slate-400'}`} />
-      <span>{label}</span>
-      {badge && (
-        <span className="ml-auto bg-primary-100 text-primary-700 text-xs font-bold px-2 py-0.5 rounded-full">
-            {badge}
-        </span>
-      )}
-    </button>
-  );
+  if (!user) {
+    return <Auth onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  const NavItem = ({ view, icon: Icon, label, badge, requiredRole }: { 
+    view: ViewType, 
+    icon: any, 
+    label: string, 
+    badge?: number,
+    requiredRole?: 'Admin' | 'Manager' | 'Employee'
+  }) => {
+    // Check role-based access
+    if (requiredRole && !canAccessView(user.role, requiredRole)) {
+      return null;
+    }
+
+    return (
+      <button
+        onClick={() => {
+          setCurrentView(view);
+          setIsSidebarOpen(false);
+          setGlobalSearch('');
+        }}
+        className={`w-full flex items-center px-4 py-3 rounded-xl mb-1 transition-all ${
+          currentView === view 
+            ? 'bg-primary-50 text-primary-700 font-medium' 
+            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+        }`}
+      >
+        <Icon className={`w-5 h-5 mr-3 ${currentView === view ? 'text-primary-600' : 'text-slate-400'}`} />
+        <span>{label}</span>
+        {badge && (
+          <span className="ml-auto bg-primary-100 text-primary-700 text-xs font-bold px-2 py-0.5 rounded-full">
+              {badge}
+          </span>
+        )}
+      </button>
+    );
+  };
+
+  const canAccessView = (userRole: string, requiredRole: string): boolean => {
+    const hierarchy: Record<string, number> = { 'Employee': 1, 'Manager': 2, 'Admin': 3 };
+    return hierarchy[userRole] >= hierarchy[requiredRole];
+  };
 
   const GroupTitle = ({ title }: { title: string }) => (
     <div className="px-4 mt-6 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -87,11 +145,15 @@ const App: React.FC = () => {
             <GroupTitle title="Main" />
             <NavItem view={ViewType.DASHBOARD} icon={LayoutDashboard} label="Dashboard" />
             <NavItem view={ViewType.TASKS} icon={CheckSquare} label="Tasks" badge={8} />
-            <NavItem view={ViewType.APPROVALS} icon={CheckCircle} label="Approvals" badge={2} />
+            {canApproveRequests(user.role) && (
+              <NavItem view={ViewType.APPROVALS} icon={CheckCircle} label="Approvals" badge={2} />
+            )}
 
             <GroupTitle title="People" />
             <NavItem view={ViewType.EMPLOYEES} icon={Users} label="Employees" />
-            <NavItem view={ViewType.PAYROLL} icon={DollarSign} label="Payroll" />
+            {canViewPayroll(user.role) && (
+              <NavItem view={ViewType.PAYROLL} icon={DollarSign} label="Payroll" />
+            )}
             <NavItem view={ViewType.LEAVES} icon={CalendarDays} label="Leaves" />
             <NavItem view={ViewType.PERFORMANCE} icon={BarChart2} label="Performance" />
 
@@ -124,14 +186,14 @@ const App: React.FC = () => {
           {/* User Profile Footer */}
           <div className="p-4 border-t border-slate-100">
             <div className="flex items-center gap-3 mb-4">
-                <img src={CURRENT_USER.avatar} alt="User" className="w-10 h-10 rounded-full border border-slate-200" />
+                <img src={user.avatar} alt="User" className="w-10 h-10 rounded-full border border-slate-200" />
                 <div className="flex-1 overflow-hidden">
-                    <p className="text-sm font-bold text-slate-900 truncate">{CURRENT_USER.name}</p>
-                    <p className="text-xs text-slate-500 truncate">{CURRENT_USER.role}</p>
+                    <p className="text-sm font-bold text-slate-900 truncate">{user.name}</p>
+                    <p className="text-xs text-slate-500 truncate">{user.role}</p>
                 </div>
             </div>
             <button 
-                onClick={() => setIsAuthenticated(false)}
+                onClick={handleLogout}
                 className="w-full flex items-center justify-center px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-sm transition-colors"
             >
                 <LogOut className="w-4 h-4 mr-2" /> Sign Out
@@ -178,9 +240,9 @@ const App: React.FC = () => {
         {/* View Content */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
             <div className="max-w-7xl mx-auto h-full">
-                {currentView === ViewType.DASHBOARD && <Dashboard searchQuery={globalSearch} />}
+                {currentView === ViewType.DASHBOARD && <Dashboard searchQuery={globalSearch} user={user} />}
                 {currentView === ViewType.TASKS && <Tasks />}
-                {currentView === ViewType.EMPLOYEES && <Employees />}
+                {currentView === ViewType.EMPLOYEES && <Employees user={user} />}
                 {currentView === ViewType.LEAVES && <Leaves />}
                 {currentView === ViewType.PAYROLL && <Payroll />}
                 {currentView === ViewType.PERFORMANCE && <Performance />}

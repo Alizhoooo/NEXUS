@@ -1,8 +1,47 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { EMPLOYEES } from '../constants';
-import { Mail, MapPin, MoreVertical, Search, Filter } from 'lucide-react';
+import { Mail, MapPin, MoreVertical, Search, Filter, UserPlus, AlertCircle } from 'lucide-react';
+import { Employee as EmployeeType } from '../types';
+import { AuthUser } from '../api/auth';
+import { EmptyState, GridSkeleton } from '../hooks/useLoadingState';
 
-const Employees: React.FC = () => {
+interface EmployeesProps {
+  user?: AuthUser;
+}
+
+const Employees: React.FC<EmployeesProps> = ({ user }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const filteredEmployees = EMPLOYEES.filter(emp => 
+    emp.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.department.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleAddEmployee = () => {
+    alert('AI Action: Открыта форма добавления нового сотрудника');
+  };
+
+  if (filteredEmployees.length === 0 && searchTerm) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">Employees</h2>
+            <p className="text-slate-500 text-sm">Поиск не дал результатов</p>
+          </div>
+        </div>
+        <EmptyState
+          icon={<Search className="w-6 h-6" />}
+          title="Сотрудники не найдены"
+          description={`Нет сотрудников, соответствующих запросу "${searchTerm}"`}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -17,65 +56,91 @@ const Employees: React.FC = () => {
                 <input 
                     type="text" 
                     placeholder="Search employees..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm w-full sm:w-64 focus:ring-2 focus:ring-primary-500 outline-none"
                 />
             </div>
             <button className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600">
                 <Filter className="w-5 h-5" />
             </button>
+            <button 
+              onClick={handleAddEmployee}
+              className="p-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center gap-2 px-4"
+            >
+                <UserPlus className="w-5 h-5" />
+                <span className="hidden sm:inline">Add</span>
+            </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {EMPLOYEES.map((employee) => (
-          <div key={employee.id} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col items-center text-center relative hover:shadow-md transition-shadow group">
-            <button className="absolute top-4 right-4 text-slate-300 hover:text-slate-600">
-                <MoreVertical className="w-5 h-5" />
-            </button>
-            
-            <div className="relative mb-4">
-                <img 
-                    src={employee.imageUrl} 
-                    alt={`${employee.firstName} ${employee.lastName}`} 
-                    className="w-20 h-20 rounded-full object-cover border-4 border-slate-50"
-                />
-                <span className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white ${
-                    employee.status === 'Active' ? 'bg-green-500' :
-                    employee.status === 'On Leave' ? 'bg-yellow-500' : 'bg-blue-500'
-                }`}></span>
-            </div>
-            
-            <h3 className="text-lg font-semibold text-slate-900">{employee.firstName} {employee.lastName}</h3>
-            <p className="text-sm text-primary-600 font-medium mb-1">{employee.role}</p>
-            <p className="text-xs text-slate-500 mb-4">{employee.department}</p>
-            
-            {/* Workload Indicator */}
-            <div className="w-full mb-4">
-                <div className="flex justify-between text-xs mb-1">
-                    <span className="text-slate-500">Workload</span>
-                    <span className="font-medium text-slate-700">{employee.workload}%</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-1.5">
-                    <div 
-                        className={`h-1.5 rounded-full ${
-                            employee.workload > 90 ? 'bg-red-500' : 'bg-primary-500'
-                        }`} 
-                        style={{ width: `${employee.workload}%` }}
-                    ></div>
-                </div>
-            </div>
+      {filteredEmployees.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredEmployees.map((employee) => (
+            <div key={employee.id} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col items-center text-center relative hover:shadow-md transition-shadow group">
+              <button className="absolute top-4 right-4 text-slate-300 hover:text-slate-600">
+                  <MoreVertical className="w-5 h-5" />
+              </button>
+              
+              <div className="relative mb-4">
+                  <img 
+                      src={employee.imageUrl} 
+                      alt={`${employee.firstName} ${employee.lastName}`} 
+                      className="w-20 h-20 rounded-full object-cover border-4 border-slate-50"
+                  />
+                  <span className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white ${
+                      employee.status === 'Active' ? 'bg-green-500' :
+                      employee.status === 'On Leave' ? 'bg-yellow-500' : 'bg-blue-500'
+                  }`}></span>
+              </div>
+              
+              <h3 className="text-lg font-semibold text-slate-900">{employee.firstName} {employee.lastName}</h3>
+              <p className="text-sm text-primary-600 font-medium mb-1">{employee.role}</p>
+              <p className="text-xs text-slate-500 mb-4">{employee.department}</p>
+              
+              {/* Workload Indicator */}
+              <div className="w-full mb-4">
+                  <div className="flex justify-between text-xs mb-1">
+                      <span className="text-slate-500">Workload</span>
+                      <span className={`font-medium ${employee.workload > 90 ? 'text-red-600' : 'text-slate-700'}`}>
+                        {employee.workload}%
+                      </span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-1.5">
+                      <div 
+                          className={`h-1.5 rounded-full ${
+                              employee.workload > 90 ? 'bg-red-500' : 'bg-primary-500'
+                          }`} 
+                          style={{ width: `${employee.workload}%` }}
+                      ></div>
+                  </div>
+                  {employee.workload > 90 && (
+                    <p className="text-xs text-red-600 mt-1 flex items-center justify-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> Риск выгорания
+                    </p>
+                  )}
+              </div>
 
-            <div className="flex gap-2 w-full mt-auto pt-4 border-t border-slate-100">
-                <button className="flex-1 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-medium flex items-center justify-center">
-                    <Mail className="w-3 h-3 mr-1.5" /> Email
-                </button>
-                <button className="flex-1 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-medium flex items-center justify-center">
-                    <MapPin className="w-3 h-3 mr-1.5" /> {employee.location ? 'Loc' : 'Profile'}
-                </button>
+              <div className="flex gap-2 w-full mt-auto pt-4 border-t border-slate-100">
+                  <button className="flex-1 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-medium flex items-center justify-center">
+                      <Mail className="w-3 h-3 mr-1.5" /> Email
+                  </button>
+                  <button className="flex-1 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-medium flex items-center justify-center">
+                      <MapPin className="w-3 h-3 mr-1.5" /> {employee.location ? 'Loc' : 'Profile'}
+                  </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon={<UserPlus className="w-6 h-6" />}
+          title="Нет сотрудников"
+          description="В системе пока нет сотрудников. Добавьте первого сотрудника!"
+          actionLabel="Добавить первого сотрудника"
+          onAction={handleAddEmployee}
+        />
+      )}
     </div>
   );
 };
