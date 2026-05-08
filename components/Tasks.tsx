@@ -1,14 +1,17 @@
 import React, { useState, useMemo } from 'react';
-import { TASKS, EMPLOYEES, CURRENT_USER } from '../constants';
-import { Task, TaskStatus, Priority } from '../types';
-import { 
-  Search, Filter, LayoutGrid, List, Plus, 
-  MoreHorizontal, MessageSquare, Calendar, Paperclip, 
-  Layers, ChevronDown, X, Check, User
+import { TaskStatus, Priority } from '../types';
+import {
+  Search, Filter, LayoutGrid, List, Plus,
+  MoreHorizontal, MessageSquare, Calendar, Paperclip,
+  Layers, ChevronDown, X, Check
 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { useData } from '../contexts/DataContext';
+import { StatusMessage } from './common/StatusMessage';
 
 const Tasks: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>(TASKS);
+  const { user } = useAuth();
+  const { tasks, employees, createTask, updateTask } = useData();
   const [searchQuery, setSearchQuery] = useState('');
   
   // View Controls
@@ -25,7 +28,10 @@ const Tasks: React.FC = () => {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<Priority>(Priority.MEDIUM);
-  const [newTaskAssigneeId, setNewTaskAssigneeId] = useState(CURRENT_USER.id);
+  const [newTaskAssigneeId, setNewTaskAssigneeId] = useState('');
+  const [saving, setSaving] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Filter tasks based on search query and active filter
   const filteredTasks = useMemo(() => {
@@ -35,14 +41,13 @@ const Tasks: React.FC = () => {
     );
 
     if (activeFilter === 'MY_TASKS') {
-        // Mocking current user check - assuming CURRENT_USER.id matches assignee.id or name check
-        result = result.filter(t => t.assignee.id === CURRENT_USER.id);
+        result = result.filter(t => t.assignee.id === user?.id);
     } else if (activeFilter === 'HIGH_PRIORITY') {
         result = result.filter(t => t.priority === Priority.URGENT || t.priority === Priority.HIGH);
     }
 
     return result;
-  }, [tasks, searchQuery, activeFilter]);
+  }, [tasks, searchQuery, activeFilter, user?.id]);
 
   // Drag and Drop Handlers
   const handleDragStart = (e: React.DragEvent, taskId: string) => {
@@ -56,54 +61,51 @@ const Tasks: React.FC = () => {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleDrop = (e: React.DragEvent, groupValue: string) => {
+  const handleDrop = async (e: React.DragEvent, groupValue: string) => {
     e.preventDefault();
     const taskId = draggedTaskId || e.dataTransfer.getData('text/plain');
-    
-    if (taskId) {
-      setTasks(prev => prev.map(t => {
-        if (t.id !== taskId) return t;
-        
-        if (groupBy === 'STATUS') {
-            return { ...t, status: groupValue as TaskStatus };
-        } else {
-            return { ...t, priority: groupValue as Priority };
-        }
-      }));
+    if (!taskId) return;
+    setSaving(taskId);
+    setError(null);
+
+    try {
+      if (groupBy === 'STATUS') await updateTask(taskId, { status: groupValue as TaskStatus });
+      else await updateTask(taskId, { priority: groupValue as Priority });
+      setNotice('Task updated and audit logged.');
+    } catch (apiError) {
+      setError(apiError instanceof Error ? apiError.message : 'Unable to update task');
+    } finally {
+      setSaving(null);
+      setDraggedTaskId(null);
     }
-    setDraggedTaskId(null);
   };
 
-  const handleCreateTask = (e: React.FormEvent) => {
+  const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
 
-    const assigneeEmp = EMPLOYEES.find(e => e.id === newTaskAssigneeId) || EMPLOYEES[0];
+    const assigneeId = newTaskAssigneeId || employees[0]?.id || user?.id;
+    if (!assigneeId) return;
+    setSaving('new');
+    setError(null);
 
-    const newTask: Task = {
-        id: `new-${Date.now()}`,
+    try {
+      await createTask({
         title: newTaskTitle,
         description: newTaskDescription || 'No description provided',
-        status: TaskStatus.TODO,
         priority: newTaskPriority,
-        assignee: {
-            id: assigneeEmp.id,
-            name: `${assigneeEmp.firstName} ${assigneeEmp.lastName}`,
-            avatar: assigneeEmp.imageUrl,
-            role: assigneeEmp.role
-        },
-        dueDate: new Date().toISOString(),
-        comments: 0,
-        subtasksTotal: 0,
-        subtasksCompleted: 0
-    };
-
-    setTasks([newTask, ...tasks]);
-    setIsNewTaskModalOpen(false);
-    // Reset form
-    setNewTaskTitle('');
-    setNewTaskDescription('');
-    setNewTaskPriority(Priority.MEDIUM);
+        assigneeId
+      });
+      setIsNewTaskModalOpen(false);
+      setNewTaskTitle('');
+      setNewTaskDescription('');
+      setNewTaskPriority(Priority.MEDIUM);
+      setNotice('Task created through the secured API.');
+    } catch (apiError) {
+      setError(apiError instanceof Error ? apiError.message : 'Unable to create task');
+    } finally {
+      setSaving(null);
+    }
   };
 
   // Helper for Priority Badges
@@ -215,6 +217,8 @@ const Tasks: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col relative">
+      {notice && <StatusMessage type="success">{notice}</StatusMessage>}
+      {error && <div className="mb-4"><StatusMessage type="error">{error}</StatusMessage></div>}
       {/* New Task Modal */}
       {isNewTaskModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
@@ -269,7 +273,7 @@ const Tasks: React.FC = () => {
                                 onChange={(e) => setNewTaskAssigneeId(e.target.value)}
                                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 outline-none"
                             >
-                                {EMPLOYEES.map(emp => (
+                                {employees.map(emp => (
                                     <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName}</option>
                                 ))}
                             </select>
@@ -286,9 +290,10 @@ const Tasks: React.FC = () => {
                         </button>
                         <button 
                             type="submit"
-                            className="flex-1 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium"
+                            disabled={saving === 'new'}
+                            className="flex-1 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium disabled:opacity-60"
                         >
-                            Create Task
+                            {saving === 'new' ? 'Creating...' : 'Create Task'}
                         </button>
                     </div>
                 </form>

@@ -25,11 +25,19 @@ export enum Priority {
   URGENT = 'URGENT'
 }
 
+export type Role = 'Admin' | 'HR' | 'Finance' | 'Manager' | 'Employee';
+
 export interface User {
   id: string;
   name: string;
   avatar: string;
   role: string;
+}
+
+export interface AuthUser extends User {
+  email: string;
+  accessRole: Role;
+  department: string;
 }
 
 export interface Task {
@@ -54,7 +62,7 @@ export interface Employee {
   department: string;
   status: 'Active' | 'On Leave' | 'Remote';
   imageUrl: string;
-  workload: number; // 0-100 percentage
+  workload: number;
   managerId?: string;
   phone?: string;
   location?: string;
@@ -86,6 +94,8 @@ export interface ApprovalRequest {
   amount?: string;
   date: string;
   status: 'Pending' | 'Approved' | 'Rejected';
+  decidedBy?: string;
+  decidedAt?: string;
 }
 
 export interface LeaveRequest {
@@ -124,7 +134,7 @@ export interface PerformanceReview {
   avatar: string;
   role: string;
   department: string;
-  overallScore: number; // 1-5
+  overallScore: number;
   metrics: {
     productivity: number;
     quality: number;
@@ -137,4 +147,34 @@ export interface PerformanceReview {
   goals: string[];
   reviewDate: string;
   reviewer: string;
+}
+
+export interface NotificationItem {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  read: boolean;
+}
+
+export interface AuditEvent {
+  id: string;
+  actorId: string;
+  actorName: string;
+  action: string;
+  entity: string;
+  entityId: string;
+  createdAt: string;
+}
+
+export interface BootstrapData {
+  user: AuthUser;
+  tasks: Task[];
+  employees: Employee[];
+  documents: Document[];
+  approvals: ApprovalRequest[];
+  leaves: LeaveRequest[];
+  payroll: PayrollRecord[] | null;
+  performance: PerformanceReview[];
+  notifications: NotificationItem[];
 }

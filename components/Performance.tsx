@@ -1,9 +1,11 @@
 import React from 'react';
-import { PERFORMANCE } from '../constants';
-import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from 'recharts';
+import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { useData } from '../contexts/DataContext';
 import { Star } from 'lucide-react';
 
 const Performance: React.FC = () => {
+  const { performance } = useData();
+
   return (
     <div className="space-y-6">
        <div className="flex justify-between items-center">
@@ -12,7 +14,8 @@ const Performance: React.FC = () => {
        </div>
 
        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          {PERFORMANCE.map(review => {
+          {performance.length === 0 && <div className="col-span-full rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-400">No performance reviews.</div>}
+          {performance.map(review => {
              // Transform metrics for radar chart
              const data = Object.keys(review.metrics).map(key => ({
                  subject: key.charAt(0).toUpperCase() + key.slice(1),
