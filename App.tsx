@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useMemo, useState } from 'react';
 import {
-  LayoutDashboard, CheckSquare, Users, FileText, Menu, Bell, Search, LogOut,
+  LayoutDashboard, CheckSquare, Users, Menu, Bell, Search, LogOut,
   DollarSign, CalendarDays, BarChart2, CheckCircle, Database, Book, Sparkles, LucideIcon
 } from 'lucide-react';
 import Auth from './components/Auth';
@@ -39,7 +39,38 @@ interface NavItemProps {
   icon: LucideIcon;
   label: string;
   badge?: number;
+  currentView: ViewType;
+  isVisible: boolean;
+  onSelect: (view: ViewType) => void;
 }
+
+const NavItem = ({ view, icon: Icon, label, badge, currentView, isVisible, onSelect }: NavItemProps) => {
+  if (!isVisible) return null;
+  return (
+    <button
+      onClick={() => onSelect(view)}
+      className={`w-full flex items-center px-4 py-3 rounded-xl mb-1 transition-all ${
+        currentView === view
+          ? 'bg-primary-50 text-primary-700 font-medium'
+          : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+      }`}
+    >
+      <Icon className={`w-5 h-5 mr-3 ${currentView === view ? 'text-primary-600' : 'text-slate-400'}`} />
+      <span>{label}</span>
+      {Boolean(badge) && (
+        <span className="ml-auto bg-primary-100 text-primary-700 text-xs font-bold px-2 py-0.5 rounded-full">
+          {badge}
+        </span>
+      )}
+    </button>
+  );
+};
+
+const GroupTitle = ({ title }: { title: string }) => (
+  <div className="px-4 mt-6 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+    {title}
+  </div>
+);
 
 const AppShell: React.FC = () => {
   const { user, logout, canAccess } = useAuth();
@@ -63,34 +94,6 @@ const AppShell: React.FC = () => {
     setIsSidebarOpen(false);
     setGlobalSearch('');
   };
-
-  const NavItem = ({ view, icon: Icon, label, badge }: NavItemProps) => {
-    if (!visibleViews.has(view)) return null;
-    return (
-      <button
-        onClick={() => openView(view)}
-        className={`w-full flex items-center px-4 py-3 rounded-xl mb-1 transition-all ${
-          currentView === view
-            ? 'bg-primary-50 text-primary-700 font-medium'
-            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
-        }`}
-      >
-        <Icon className={`w-5 h-5 mr-3 ${currentView === view ? 'text-primary-600' : 'text-slate-400'}`} />
-        <span>{label}</span>
-        {Boolean(badge) && (
-          <span className="ml-auto bg-primary-100 text-primary-700 text-xs font-bold px-2 py-0.5 rounded-full">
-            {badge}
-          </span>
-        )}
-      </button>
-    );
-  };
-
-  const GroupTitle = ({ title }: { title: string }) => (
-    <div className="px-4 mt-6 mb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-      {title}
-    </div>
-  );
 
   const renderView = () => {
     if (!visibleViews.has(currentView)) {
@@ -128,19 +131,19 @@ const AppShell: React.FC = () => {
 
           <div className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide">
             <GroupTitle title="Main" />
-            <NavItem view={ViewType.DASHBOARD} icon={LayoutDashboard} label="Dashboard" />
-            <NavItem view={ViewType.TASKS} icon={CheckSquare} label="Tasks" />
-            <NavItem view={ViewType.APPROVALS} icon={CheckCircle} label="Approvals" badge={pendingApprovals} />
+            <NavItem view={ViewType.DASHBOARD} icon={LayoutDashboard} label="Dashboard" currentView={currentView} isVisible={visibleViews.has(ViewType.DASHBOARD)} onSelect={openView} />
+            <NavItem view={ViewType.TASKS} icon={CheckSquare} label="Tasks" currentView={currentView} isVisible={visibleViews.has(ViewType.TASKS)} onSelect={openView} />
+            <NavItem view={ViewType.APPROVALS} icon={CheckCircle} label="Approvals" badge={pendingApprovals} currentView={currentView} isVisible={visibleViews.has(ViewType.APPROVALS)} onSelect={openView} />
 
             <GroupTitle title="People" />
-            <NavItem view={ViewType.EMPLOYEES} icon={Users} label="Employees" />
-            <NavItem view={ViewType.PAYROLL} icon={DollarSign} label="Payroll" />
-            <NavItem view={ViewType.LEAVES} icon={CalendarDays} label="Leaves" />
-            <NavItem view={ViewType.PERFORMANCE} icon={BarChart2} label="Performance" />
+            <NavItem view={ViewType.EMPLOYEES} icon={Users} label="Employees" currentView={currentView} isVisible={visibleViews.has(ViewType.EMPLOYEES)} onSelect={openView} />
+            <NavItem view={ViewType.PAYROLL} icon={DollarSign} label="Payroll" currentView={currentView} isVisible={visibleViews.has(ViewType.PAYROLL)} onSelect={openView} />
+            <NavItem view={ViewType.LEAVES} icon={CalendarDays} label="Leaves" currentView={currentView} isVisible={visibleViews.has(ViewType.LEAVES)} onSelect={openView} />
+            <NavItem view={ViewType.PERFORMANCE} icon={BarChart2} label="Performance" currentView={currentView} isVisible={visibleViews.has(ViewType.PERFORMANCE)} onSelect={openView} />
 
             <GroupTitle title="Knowledge" />
-            <NavItem view={ViewType.DOCUMENTS} icon={Database} label="Documents" />
-            <NavItem view={ViewType.WIKI} icon={Book} label="Wiki" />
+            <NavItem view={ViewType.DOCUMENTS} icon={Database} label="Documents" currentView={currentView} isVisible={visibleViews.has(ViewType.DOCUMENTS)} onSelect={openView} />
+            <NavItem view={ViewType.WIKI} icon={Book} label="Wiki" currentView={currentView} isVisible={visibleViews.has(ViewType.WIKI)} onSelect={openView} />
 
             <GroupTitle title="Intelligence" />
             {visibleViews.has(ViewType.ASSISTANT) && (

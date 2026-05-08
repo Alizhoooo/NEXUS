@@ -15,13 +15,10 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(() => Boolean(authToken.get()));
 
   useEffect(() => {
-    if (!authToken.get()) {
-      setIsInitializing(false);
-      return;
-    }
+    if (!authToken.get()) return;
 
     apiClient.me()
       .then(({ user: currentUser }) => setUser(currentUser))

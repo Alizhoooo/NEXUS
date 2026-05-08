@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Book, ChevronRight, Search, Building, Code, Users, Briefcase, FileText, Globe, GraduationCap } from 'lucide-react';
+import { Book, ChevronRight, Search, Building, Code, Users, Briefcase, Globe, GraduationCap } from 'lucide-react';
 
 const Wiki: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState('About Kolesa Group');

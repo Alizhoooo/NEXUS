@@ -31,10 +31,13 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ['react', 'react-dom'],
-          charts: ['recharts'],
-          icons: ['lucide-react']
+        manualChunks(id) {
+          if (id.includes('node_modules/react')) return 'react';
+          if (id.includes('node_modules/recharts')) return 'charts';
+          if (id.includes('node_modules/d3-')) return 'd3';
+          if (id.includes('node_modules/lodash')) return 'lodash';
+          if (id.includes('node_modules/lucide-react')) return 'icons';
+          return undefined;
         }
       }
     }
