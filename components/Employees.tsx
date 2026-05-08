@@ -1,22 +1,28 @@
-import React from 'react';
-import { EMPLOYEES } from '../constants';
+import React, { useMemo, useState } from 'react';
 import { Mail, MapPin, MoreVertical, Search, Filter } from 'lucide-react';
+import { useData } from '../contexts/DataContext';
 
 const Employees: React.FC = () => {
+  const { employees } = useData();
+  const [searchQuery, setSearchQuery] = useState('');
+  const filteredEmployees = useMemo(() => employees.filter((employee) => `${employee.firstName} ${employee.lastName} ${employee.department} ${employee.role}`.toLowerCase().includes(searchQuery.toLowerCase())), [employees, searchQuery]);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Employees</h2>
-          <p className="text-slate-500 text-sm">Total {EMPLOYEES.length} active team members</p>
+          <p className="text-slate-500 text-sm">Total {filteredEmployees.length} active team members</p>
         </div>
         
         <div className="flex gap-3 w-full sm:w-auto">
             <div className="relative flex-1 sm:flex-initial">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                 <input 
-                    type="text" 
-                    placeholder="Search employees..." 
+                    type="text"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search employees..."
                     className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm w-full sm:w-64 focus:ring-2 focus:ring-primary-500 outline-none"
                 />
             </div>
@@ -27,7 +33,8 @@ const Employees: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {EMPLOYEES.map((employee) => (
+        {filteredEmployees.length === 0 && <div className="col-span-full rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-400">No employees found.</div>}
+        {filteredEmployees.map((employee) => (
           <div key={employee.id} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col items-center text-center relative hover:shadow-md transition-shadow group">
             <button className="absolute top-4 right-4 text-slate-300 hover:text-slate-600">
                 <MoreVertical className="w-5 h-5" />
