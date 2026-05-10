@@ -5,8 +5,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --production
+# Install dependencies (skip prepare scripts for production)
+RUN npm install --omit=dev --ignore-scripts
 
 # Copy prisma and generate client
 COPY prisma/ ./prisma/
