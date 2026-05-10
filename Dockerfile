@@ -24,9 +24,6 @@ COPY . .
 # Build frontend
 RUN npm run build
 
-# Remove dev dependencies to reduce image size
-RUN npm prune --production
-
 # Expose port
 EXPOSE 3001
 
