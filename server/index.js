@@ -1,6 +1,7 @@
 import compression from 'compression';
 import cors from 'cors';
 import crypto from 'node:crypto';
+import { execSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
@@ -195,6 +196,40 @@ app.get('/api/health', async (_req, res) => {
     res.json({ status: 'ok', timestamp: now(), database: 'connected' });
   } catch {
     res.status(503).json({ status: 'error', timestamp: now(), database: 'disconnected', error: 'Database unavailable' });
+  }
+});
+
+const INIT_SECRET = process.env.NEXUS_INIT_SECRET || '';
+let dbInitialized = false;
+
+app.get('/api/init', async (req, res) => {
+  if (!INIT_SECRET) {
+    return res.status(403).json({ message: 'Initialization disabled - no secret configured' });
+  }
+
+  const { secret } = req.query;
+  if (secret !== INIT_SECRET) {
+    return res.status(401).json({ message: 'Invalid secret' });
+  }
+
+  if (dbInitialized) {
+    return res.json({ message: 'Database already initialized', initialized: true });
+  }
+
+  try {
+    logger.info('Starting database initialization...');
+
+    execSync('npx prisma db push --skip-generate', { stdio: 'inherit', cwd: ROOT_DIR });
+    logger.info('Schema pushed');
+
+    execSync('node prisma/seed.js', { stdio: 'inherit', cwd: ROOT_DIR });
+    logger.info('Seed data loaded');
+
+    dbInitialized = true;
+    res.json({ message: 'Database initialized successfully', initialized: true });
+  } catch (error) {
+    logger.error('Database initialization failed', { error: String(error) });
+    res.status(500).json({ message: 'Database initialization failed', error: String(error) });
   }
 });
 

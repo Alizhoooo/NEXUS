@@ -2,6 +2,12 @@ FROM node:20-bookworm
 
 WORKDIR /app
 
+# Install OpenSSL for Prisma
+RUN apt-get update && apt-get install -y \
+    libssl3 \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy package files
 COPY package*.json ./
 
