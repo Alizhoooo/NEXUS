@@ -5,8 +5,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies (skip prepare scripts for production)
-RUN npm install --omit=dev --ignore-scripts
+# Install ALL dependencies (including dev for build)
+RUN npm install
 
 # Copy prisma and generate client
 COPY prisma/ ./prisma/
@@ -17,6 +17,9 @@ COPY . .
 
 # Build frontend
 RUN npm run build
+
+# Remove dev dependencies to reduce image size
+RUN npm prune --production
 
 # Expose port
 EXPOSE 3001
