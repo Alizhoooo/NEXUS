@@ -199,15 +199,9 @@ app.get('/api/health', async (_req, res) => {
   }
 });
 
-const INIT_SECRET = process.env.NEXUS_INIT_SECRET || 'init-2026';
 let dbInitialized = false;
 
 app.get('/api/init', async (req, res) => {
-  const { secret } = req.query;
-  if (secret !== INIT_SECRET) {
-    return res.status(401).json({ message: 'Invalid secret' });
-  }
-
   if (dbInitialized) {
     return res.json({ message: 'Database already initialized', initialized: true });
   }
