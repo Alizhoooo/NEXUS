@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String    @id @default(uuid())
+  email       String    @unique
+  password    String
+  name        String
+  role        String
+  accessRole  String
+  department  String
+  avatar      String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Employee {
+  id          String    @id @default(uuid())
+  firstName   String
+  lastName    String
+  email       String    @unique
+  role        String
+  department  String
+  status      String
+  imageUrl    String
+  workload    Int
+  managerId   String?
+  phone       String?
+  location    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Task {
+  id                 String   @id @default(uuid())
+  title              String
+  description        String
+  status             String
+  priority           String
+  assigneeId         String
+  assigneeName       String
+  assigneeAvatar     String
+  assigneeRole       String
+  dueDate            DateTime
+  comments           Int      @default(0)
+  subtasksTotal      Int      @default(0)
+  subtasksCompleted  Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Document {
+  id        String   @id @default(uuid())
+  name      String
+  type      String
+  size      String
+  updatedAt String
+  author    String
+  createdAt DateTime @default(now())
+}
+
+model Approval {
+  id         String   @id @default(uuid())
+  type       String
+  requestor  String
+  avatar     String
+  details    String
+  amount     String?
+  date       String
+  status     String
+  decidedBy  String?
+  decidedAt  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Leave {
+  id           String   @id @default(uuid())
+  employeeId   String
+  employeeName String
+  avatar       String
+  type         String
+  startDate    String
+  endDate      String
+  days         Int
+  reason       String
+  status       String
+  approver     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Payroll {
+  id           String   @id @default(uuid())
+  employeeId   String
+  employeeName String
+  avatar       String
+  department   String
+  baseSalary   Int
+  bonus        Int
+  deductions   Int
+  netSalary    Int
+  currency     String
+  period       String
+  status       String
+  createdAt    DateTime @default(now())
+}
+
+model Performance {
+  id             String   @id @default(uuid())
+  employeeId     String
+  employeeName   String
+  avatar         String
+  role           String
+  department     String
+  overallScore   Float
+  productivity   Int
+  quality        Int
+  teamwork       Int
+  communication Int
+  initiative     Int
+  strengths      String[]
+  improvements   String[]
+  goals          String[]
+  reviewDate     String
+  reviewer       String
+  createdAt      DateTime @default(now())
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  createdAt   String
+  read        Boolean  @default(false)
+  createdAtDt DateTime @default(now())
+}
+
+model AuditEvent {
+  id         String   @id @default(uuid())
+  actorId    String
+  actorName  String
+  action     String
+  entity     String
+  entityId   String
+  createdAt  String
+}

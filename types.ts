@@ -177,4 +177,17 @@ export interface BootstrapData {
   payroll: PayrollRecord[] | null;
   performance: PerformanceReview[];
   notifications: NotificationItem[];
+  pagination?: PaginationInfo;
+}
+
+export interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: PaginationInfo;
 }

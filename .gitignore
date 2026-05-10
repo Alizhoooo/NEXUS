@@ -10,7 +10,12 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
-*.local
+
+# Environment files
+.env
+.env.local
+.env.production
+*.env
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +27,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Prisma
+prisma/*.db
+prisma/migrations/
+prisma/migrations.lock
+
+# Data
+.data/
+*.json.bak

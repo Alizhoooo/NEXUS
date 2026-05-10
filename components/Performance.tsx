@@ -1,7 +1,7 @@
-import React from 'react';
-import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import React, { Suspense } from 'react';
 import { useData } from '../contexts/DataContext';
 import { Star } from 'lucide-react';
+import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 
 const Performance: React.FC = () => {
   const { performance } = useData();
@@ -64,14 +64,16 @@ const Performance: React.FC = () => {
 
                     <div className="bg-slate-50 p-6 md:w-80 border-l border-slate-100 flex items-center justify-center">
                         <div className="h-64 w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
-                                    <PolarGrid stroke="#e2e8f0" />
-                                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10 }} />
-                                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                                    <Radar name={review.employeeName} dataKey="A" stroke="#0ea5e9" fill="#0ea5e9" fillOpacity={0.4} />
-                                </RadarChart>
-                            </ResponsiveContainer>
+                            <Suspense fallback={<div className="h-full flex items-center justify-center text-slate-400 text-sm">Loading chart...</div>}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
+                                        <PolarGrid stroke="#e2e8f0" />
+                                        <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10 }} />
+                                        <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                                        <Radar name={review.employeeName} dataKey="A" stroke="#0ea5e9" fill="#0ea5e9" fillOpacity={0.4} />
+                                    </RadarChart>
+                                </ResponsiveContainer>
+                            </Suspense>
                         </div>
                     </div>
                  </div>

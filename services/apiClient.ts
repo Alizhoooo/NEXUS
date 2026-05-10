@@ -1,4 +1,4 @@
-import { ApprovalRequest, AuthUser, BootstrapData, Document, LeaveRequest, PayrollRecord, Priority, Task, TaskStatus } from '../types';
+import { ApprovalRequest, AuthUser, BootstrapData, Document, Employee, LeaveRequest, PayrollRecord, Priority, Task, TaskStatus } from '../types';
 
 const TOKEN_KEY = 'nexus.auth.token';
 
@@ -42,7 +42,8 @@ export const apiClient = {
     body: JSON.stringify({ email, password })
   }),
   me: () => request<{ user: AuthUser }>('/api/auth/me'),
-  bootstrap: () => request<BootstrapData>('/api/bootstrap'),
+  bootstrap: (page = 1, limit = 20) => request<BootstrapData>(`/api/bootstrap?page=${page}&limit=${limit}`),
+  getEmployees: (page = 1, limit = 20, search = '') => request<{ data: Employee[]; pagination: import('../types').PaginationInfo }>(`/api/employees?page=${page}&limit=${limit}${search ? `&search=${encodeURIComponent(search)}` : ''}`),
   createTask: (payload: { title: string; description: string; priority: Priority; assigneeId: string }) => request<Task>('/api/tasks', {
     method: 'POST',
     body: JSON.stringify(payload)
