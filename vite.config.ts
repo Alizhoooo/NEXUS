@@ -45,7 +45,6 @@ export default defineConfig({
     chunkSizeWarningLimit: 500
   },
   optimizeDeps: {
-    include: ['react', 'react-dom'],
-    exclude: ['recharts']
+    include: ['react', 'react-dom', 'recharts']
   }
 });

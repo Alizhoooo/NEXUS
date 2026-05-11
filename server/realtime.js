@@ -1,5 +1,6 @@
 import { Server as SocketIO } from 'socket.io';
 import jwt from 'jsonwebtoken';
+import { corsOrigin } from './corsConfig.js';
 import { getIO } from './globals.js';
 
 const TOKEN_SECRET = process.env.NEXUS_TOKEN_SECRET || 'dev-secret';
@@ -9,7 +10,7 @@ const connectedUsers = new Map();
 export function setupWebSocket(server) {
   const io = new SocketIO(server, {
     cors: {
-      origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+      origin: corsOrigin,
       credentials: true
     },
     pingTimeout: 60000,
