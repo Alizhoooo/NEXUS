@@ -14,9 +14,9 @@ COPY package*.json ./
 # Install ALL dependencies (including dev for build)
 RUN npm install
 
-# Copy prisma and generate client + apply migrations
+# Copy prisma and generate client
 COPY prisma/ ./prisma/
-RUN npx prisma generate && npx prisma db push
+RUN npx prisma generate
 
 # Copy application
 COPY . .

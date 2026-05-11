@@ -3,7 +3,7 @@ services:
     name: nexus
     env: node
     buildCommand: npm install && npx prisma generate && npm run build
-    startCommand: node server/index.js
+    startCommand: npx prisma db push && node server/index.js
     envVars:
       - key: NODE_ENV
         value: production
