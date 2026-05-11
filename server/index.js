@@ -17,6 +17,7 @@ import { cache, CACHE_KEYS } from './cache.js';
 import swaggerDocs from './swagger.js';
 import { setupWebSocket } from './realtime.js';
 import { csrfConfig } from './csrf.js';
+import { corsOrigin } from './corsConfig.js';
 import { setIO } from './globals.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -96,7 +97,7 @@ app.use(helmet({
   }
 }));
 app.use(compression());
-app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:3000', credentials: true }));
+app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json({ limit: '1mb' }));
 
 const now = () => new Date().toISOString();

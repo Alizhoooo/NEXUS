@@ -2,6 +2,11 @@ import { ApprovalRequest, AuthUser, BootstrapData, Document, Employee, LeaveRequ
 
 const TOKEN_KEY = 'nexus.auth.token';
 
+type ViteImportMeta = ImportMeta & { env?: { VITE_API_BASE_URL?: string } };
+
+const API_BASE_URL = ((import.meta as ViteImportMeta).env?.VITE_API_BASE_URL || '').replace(/\/$/, '');
+const apiUrl = (path: string): string => `${API_BASE_URL}${path}`;
+
 export class ApiError extends Error {
   constructor(message: string, public readonly status: number) {
     super(message);
@@ -27,7 +32,7 @@ const request = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
   const headers = new Headers(init.headers);
   if (!headers.has('Content-Type') && init.body) headers.set('Content-Type', 'application/json');
   if (token) headers.set('Authorization', `Bearer ${token}`);
-  const response = await fetch(path, { ...init, headers });
+  const response = await fetch(apiUrl(path), { ...init, headers });
   return parseResponse<T>(response);
 };
 
@@ -66,13 +71,13 @@ export const apiClient = {
   }),
   downloadDocument: async (id: string): Promise<Blob> => {
     const token = authToken.get();
-    const response = await fetch(`/api/documents/${id}/download`, { headers: token ? { Authorization: `Bearer ${token}` } : undefined });
+    const response = await fetch(apiUrl(`/api/documents/${id}/download`), { headers: token ? { Authorization: `Bearer ${token}` } : undefined });
     if (!response.ok) throw new ApiError(response.statusText, response.status);
     return response.blob();
   },
   exportPayroll: async (): Promise<Blob> => {
     const token = authToken.get();
-    const response = await fetch('/api/payroll/export', { headers: token ? { Authorization: `Bearer ${token}` } : undefined });
+    const response = await fetch(apiUrl('/api/payroll/export'), { headers: token ? { Authorization: `Bearer ${token}` } : undefined });
     if (!response.ok) throw new ApiError(response.statusText, response.status);
     return response.blob();
   },
