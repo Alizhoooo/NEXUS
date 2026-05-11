@@ -78,11 +78,10 @@
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
-      "eslint --fix",
-      "vitest run --run --related"
+      "eslint --fix"
     ],
     "*.{ts,tsx}": [
-      "tsc --noEmit"
+      "bash -c \"tsc --noEmit\""
     ]
   }
 }

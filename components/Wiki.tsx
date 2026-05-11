@@ -88,9 +88,9 @@ const Wiki: React.FC = () => {
 
             <h3 className="text-xl font-bold text-slate-800 mt-8 mb-4">Frontend (NEXUS Platform)</h3>
             <ul className="list-disc pl-5 space-y-2 text-slate-600">
-                <li><strong>Stack:</strong> React 19, TypeScript, Vite, Tailwind CSS.</li>
-                <li><strong>State Management:</strong> Context API for simple state, Zustand for complex flows.</li>
-                <li><strong>Testing:</strong> Jest + React Testing Library. Minimum 80% coverage for core components.</li>
+                <li><strong>Stack:</strong> React 18, TypeScript, Vite, Tailwind CSS.</li>
+                <li><strong>State Management:</strong> Context API for auth and API-backed workspace data.</li>
+                <li><strong>Testing:</strong> Vitest + React Testing Library + Playwright for core workflows.</li>
             </ul>
 
             <h3 className="text-xl font-bold text-slate-800 mt-8 mb-4">Backend & Infrastructure</h3>
