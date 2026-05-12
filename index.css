@@ -10,6 +10,12 @@
     background-color: #f8fafc;
   }
 
+  .dark body,
+  body.dark,
+  .dark {
+    color-scheme: dark;
+  }
+
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -24,7 +30,15 @@
     border-radius: 4px;
   }
 
+  .dark ::-webkit-scrollbar-thumb {
+    background: #475569;
+  }
+
   ::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
   }
 }
